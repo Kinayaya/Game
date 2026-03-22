@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0a0015">
+<title>BEAT RUSH</title>
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui">
+  <div id="progress-bar"></div>
+  <div id="beat-indicator"></div>
+
+  <div id="song-info">
+    <div id="song-title">✦ Neon Fantasy</div>
+    <div id="song-sub">BPM 160 · HARD</div>
+  </div>
+
+  <div id="score-display">
+    <div id="score">000000</div>
+    <div id="combo">COMBO × 0</div>
+    <div id="accuracy">Accuracy: 100%</div>
+  </div>
+
+  <div id="hit-feedback">PERFECT!</div>
+
+  <div id="lane-hints">
+    <div class="lane-btn" id="laneL"
+      ontouchstart="game.handleLaneTap(0,true,event)"
+      ontouchend="game.handleLaneTap(0,false,event)"
+      onmousedown="game.handleLaneTap(0,true,event)"
+      onmouseup="game.handleLaneTap(0,false,event)">◀ TAP</div>
+    <div class="lane-btn" id="laneR"
+      ontouchstart="game.handleLaneTap(1,true,event)"
+      ontouchend="game.handleLaneTap(1,false,event)"
+      onmousedown="game.handleLaneTap(1,true,event)"
+      onmouseup="game.handleLaneTap(1,false,event)">TAP ▶</div>
+  </div>
+</div>
+
+<!-- Start Screen -->
+<div id="start-screen">
+  <h1>BEAT RUSH</h1>
+  <div class="sub">iPad 觸控音樂節奏遊戲</div>
+  <button id="start-btn" onclick="game.start()">▶ 開始遊玩</button>
+  <div class="hint">
+    點擊左半部 ◀ 打擊粉紅音符<br>
+    點擊右半部 ▶ 打擊藍色音符<br>
+    鍵盤：A / D
+  </div>
+</div>
+
+<!-- Result Screen -->
+<div id="result-screen">
+  <h2>✦ STAGE CLEAR ✦</h2>
+  <div class="result-row">最終分數：<span id="r-score">0</span></div>
+  <div class="result-row">最高連擊：<span id="r-combo">0</span></div>
+  <div class="result-row">PERFECT <span id="r-perfect">0</span> · GOOD <span id="r-good">0</span> · MISS <span id="r-miss">0</span></div>
+  <div class="result-row">準確率：<span id="r-acc">0%</span></div>
+  <button id="play-again-btn" onclick="game.reset()">↺ 再玩一次</button>
+</div>
+
+<script src="src/audio.js"></script>
+<script src="src/notes.js"></script>
+<script src="src/renderer.js"></script>
+<script src="src/game.js"></script>
+</body>
+</html>
