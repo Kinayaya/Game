@@ -1,55 +1,56 @@
 /**
- * notes.js — Note chart generation
- * Produces a note array synced to the drum pattern.
- * Lane 0 = top (pink, snare beats)
- * Lane 1 = bottom (blue, kick beats)
+ * notes.js — Note chart generator with Hold Notes and difficulty support
  */
-
 const NoteChart = (() => {
 
-  /**
-   * Generate the note chart for the song.
-   * @returns {Array<{id, lane, time, x, active, missed}>}
-   */
-  function generate() {
-    const BEAT        = AudioEngine.getBeat();
-    const SONG_BARS   = 16;
-    const totalBeats  = SONG_BARS * 4;
-    const notes       = [];
-    let   id          = 0;
+  function generate(song, difficulty) {
+    const cfg   = DIFF_CONFIG[difficulty];
+    const BEAT  = AudioEngine.getBeat(song.bpm);
+    const totalBeats = song.bars * 4;
+    const notes = [];
+    let id = 0;
 
     for (let beat = 0; beat < totalBeats; beat++) {
-      if (beat < 4) continue;             // grace period at intro
+      if (beat < 4) continue; // grace period
 
-      const beatTime = beat * BEAT * 1000; // milliseconds
-      const b4       = beat % 4;
+      const beatTime = beat * BEAT * 1000;
+      const b4 = beat % 4;
 
-      // Kick on beats 0,2  → lane 1 (blue)
-      if (b4 === 0 || b4 === 2) {
-        notes.push(makeNote(id++, 1, beatTime));
+      // Skip notes based on density (Easy skips some)
+      const skip = () => Math.random() > cfg.density;
+
+      // Kick → lane 1
+      if ((b4===0||b4===2) && !skip()) {
+        const hold = Math.random() < cfg.holdChance;
+        notes.push(makeNote(id++, 1, beatTime, hold ? BEAT*600 : 0));
       }
-
-      // Snare on beats 1,3 → lane 0 (pink)
-      if (b4 === 1 || b4 === 3) {
-        notes.push(makeNote(id++, 0, beatTime));
+      // Snare → lane 0
+      if ((b4===1||b4===3) && !skip()) {
+        const hold = Math.random() < cfg.holdChance;
+        notes.push(makeNote(id++, 0, beatTime, hold ? BEAT*600 : 0));
       }
-
-      // Extra 8th-note fills after bar 8
-      if (beat >= 8 && (b4 === 0 || b4 === 2)) {
-        notes.push(makeNote(id++, 0, beatTime + BEAT * 500));
+      // Extra 8th fills after bar 8
+      if (beat >= 8 && cfg.density >= 1 && (b4===0||b4===2) && !skip()) {
+        notes.push(makeNote(id++, 0, beatTime + BEAT*500));
       }
-
-      // Dense fills in last section (bar 12+)
-      if (beat >= 12 && b4 === 1) {
-        notes.push(makeNote(id++, 1, beatTime + BEAT * 500));
+      // Dense master fills
+      if (difficulty === 'master' && beat >= 12 && b4===1 && !skip()) {
+        notes.push(makeNote(id++, 1, beatTime + BEAT*500));
       }
     }
-
     return notes;
   }
 
-  function makeNote(id, lane, time) {
-    return { id, lane, time, x: 0, active: true, missed: false };
+  function makeNote(id, lane, time, holdDur=0) {
+    return {
+      id, lane, time,
+      holdDur,      // ms — 0 = tap note, >0 = hold note
+      x: 0,
+      active: true,
+      missed: false,
+      holding: false,   // currently being held
+      holdReleased: false,
+    };
   }
 
   return { generate };
