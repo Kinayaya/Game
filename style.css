@@ -1,0 +1,236 @@
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0015;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+canvas { display: block; }
+
+/* ── UI Overlay ───────────────────────────────────────────────────────────── */
+#ui {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+#progress-bar {
+  position: absolute;
+  top: 0; left: 0;
+  height: 4px; width: 0%;
+  background: linear-gradient(90deg, #ff6ec7, #a78bfa, #7dd3fc);
+  transition: width 0.2s linear;
+}
+
+#beat-indicator {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #ff6ec7;
+  opacity: 0;
+  transition: opacity 0.05s;
+}
+
+/* ── Song Info ────────────────────────────────────────────────────────────── */
+#song-info {
+  position: absolute;
+  top: 20px; left: 30px;
+}
+
+#song-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 10px #a78bfa;
+}
+
+#song-sub {
+  font-size: 13px;
+  color: #a78bfa;
+  margin-top: 3px;
+}
+
+/* ── Score Display ────────────────────────────────────────────────────────── */
+#score-display {
+  position: absolute;
+  top: 20px; right: 30px;
+  text-align: right;
+}
+
+#score {
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 20px #ff6ec7, 0 0 40px #ff6ec7;
+  letter-spacing: 2px;
+}
+
+#combo {
+  font-size: 18px;
+  color: #ffdd00;
+  text-shadow: 0 0 10px #ffaa00;
+  margin-top: 4px;
+}
+
+#accuracy {
+  font-size: 14px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* ── Hit Feedback ─────────────────────────────────────────────────────────── */
+#hit-feedback {
+  position: absolute;
+  bottom: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.08s;
+}
+
+/* ── Lane Tap Buttons ─────────────────────────────────────────────────────── */
+#lane-hints {
+  position: absolute;
+  bottom: 105px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  pointer-events: all;
+}
+
+.lane-btn {
+  width: 130px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.lane-btn:first-child {
+  border-radius: 12px 0 0 12px;
+  background: rgba(255, 100, 150, 0.07);
+}
+
+.lane-btn:last-child {
+  border-radius: 0 12px 12px 0;
+  background: rgba(100, 180, 255, 0.07);
+}
+
+.lane-btn.active {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #fff;
+}
+
+/* ── Start Screen ─────────────────────────────────────────────────────────── */
+#start-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 0, 21, 0.96);
+  pointer-events: all;
+}
+
+#start-screen h1 {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 30px #ff6ec7, 0 0 60px #a78bfa;
+  letter-spacing: 6px;
+  margin-bottom: 8px;
+}
+
+#start-screen .sub {
+  font-size: 15px;
+  color: #a78bfa;
+  margin-bottom: 40px;
+  letter-spacing: 2px;
+}
+
+#start-btn {
+  padding: 16px 64px;
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff6ec7, #a78bfa);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(255, 110, 199, 0.5);
+}
+
+#start-btn:active { transform: scale(0.97); }
+
+.hint {
+  margin-top: 28px;
+  color: #555;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.9;
+}
+
+/* ── Result Screen ────────────────────────────────────────────────────────── */
+#result-screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 0, 21, 0.97);
+  pointer-events: all;
+}
+
+#result-screen h2 {
+  font-size: 40px;
+  font-weight: 900;
+  color: #ffdd00;
+  text-shadow: 0 0 20px #ffaa00;
+  margin-bottom: 20px;
+}
+
+.result-row {
+  font-size: 18px;
+  color: #fff;
+  margin: 6px 0;
+}
+
+.result-row span {
+  color: #ff6ec7;
+  font-weight: 700;
+}
+
+#play-again-btn {
+  margin-top: 28px;
+  padding: 14px 50px;
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa, #ff6ec7);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+#play-again-btn:active { transform: scale(0.97); }
