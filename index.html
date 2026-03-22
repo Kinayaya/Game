@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>轉生異世界統治者</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+:root{
+  --gold:#c9a84c;--gold2:#f0d080;--dark:#0d0d18;--dark2:#141428;--dark3:#1e1e38;
+  --panel:#12122a;--border:#2a2a50;--text:#d8d4cc;--muted:#7a7890;
+  --red:#c0392b;--green:#27ae60;--blue:#2980b9;--purple:#8e44ad;
+  --hp:#e74c3c;--mp:#3498db;--exp:#f39c12;--morale:#27ae60;--food:#e67e22;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--dark)}
+body{font-family:'Noto Sans TC',sans-serif;color:var(--text);font-size:14px}
+
+#app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── HEADER ── */
+#header{
+  background:linear-gradient(180deg,#0a0a20 0%,var(--dark2) 100%);
+  border-bottom:1px solid var(--border);
+  padding:8px 12px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+#title-text{font-family:'Noto Serif TC',serif;font-size:14px;color:var(--gold);letter-spacing:2px}
+#rank-badge{font-size:11px;color:var(--gold2);background:rgba(201,168,76,.15);
+  border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:2px 10px}
+
+/* ── STAT BAR ── */
+#statbar{
+  background:var(--dark2);border-bottom:1px solid var(--border);
+  padding:6px 12px;display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0
+}
+.stat-item{display:flex;align-items:center;gap:5px;font-size:11px}
+.bar-outer{width:60px;height:7px;background:#1a1a30;border-radius:4px;overflow:hidden}
+.bar-inner{height:100%;border-radius:4px;transition:width .4s}
+.stat-label{color:var(--muted);min-width:20px}
+
+/* ── MAIN AREA ── */
+#main{flex:1;display:flex;overflow:hidden;min-height:0}
+
+/* ── MAP PANEL ── */
+#map-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#map-wrap{flex:1;overflow:hidden;position:relative;background:#0a0a1a}
+canvas{display:block;image-rendering:pixelated;width:100%;height:100%}
+#location-label{
+  position:absolute;top:8px;left:8px;
+  font-size:11px;color:var(--gold);
+  background:rgba(0,0,0,.6);padding:3px 8px;border-radius:4px;
+  border:1px solid rgba(201,168,76,.3);pointer-events:none
+}
+
+/* ── DPAD ── */
+#dpad-area{
+  background:var(--dark2);border-top:1px solid var(--border);
+  padding:8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0
+}
+#dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:3px}
+#dpad button{
+  width:44px;height:44px;background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .1s
+}
+#dpad button:active{background:var(--border)}
+#action-btns{display:flex;flex-direction:column;gap:6px}
+.act-btn{
+  padding:8px 14px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.4);
+  border-radius:var(--r);color:var(--gold);font-size:12px;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;transition:all .15s;white-space:nowrap
+}
+.act-btn:active{background:rgba(201,168,76,.25)}
+
+/* ── SIDE PANEL ── */
+#side{
+  width:220px;background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0
+}
+#side-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:8px 2px;text-align:center;font-size:11px;cursor:pointer;
+  color:var(--muted);border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+#side-content{flex:1;overflow-y:auto;padding:10px}
+#side-content::-webkit-scrollbar{width:3px}
+#side-content::-webkit-scrollbar-track{background:transparent}
+#side-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── MESSAGE LOG ── */
+#msglog{
+  height:90px;background:var(--dark);border-top:1px solid var(--border);
+  overflow-y:auto;padding:6px 10px;flex-shrink:0;font-size:12px;line-height:1.7
+}
+#msglog::-webkit-scrollbar{width:3px}
+#msglog::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg-line{color:var(--text)}
+.msg-line.gold{color:var(--gold)}
+.msg-line.red{color:#e74c3c}
+.msg-line.green{color:#2ecc71}
+.msg-line.blue{color:#74b9ff}
+
+/* ── PANELS ── */
+.panel-section{margin-bottom:14px}
+.panel-title{font-size:11px;color:var(--gold);letter-spacing:1px;margin-bottom:8px;
+  border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:4px}
+.info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.info-val{color:var(--gold2);font-weight:500}
+
+/* ── BUTTONS GENERIC ── */
+.btn{
+  width:100%;padding:8px;border:1px solid var(--border);background:var(--dark3);
+  border-radius:var(--r);color:var(--text);font-size:12px;cursor:pointer;
+  margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;
+  transition:all .15s;text-align:left
+}
+.btn:active,.btn:hover{background:var(--border)}
+.btn.primary{border-color:rgba(201,168,76,.5);background:rgba(201,168,76,.1);color:var(--gold)}
+.btn.danger{border-color:rgba(192,57,43,.5);background:rgba(192,57,43,.1);color:#e74c3c}
+.btn.disabled{opacity:.4;cursor:default}
+
+/* ── MODAL ── */
+#modal-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.85);
+  display:flex;align-items:center;justify-content:center;z-index:100
+}
+#modal{
+  background:var(--dark2);border:1px solid var(--border);border-radius:12px;
+  padding:24px;width:min(90vw,360px);max-height:85vh;overflow-y:auto
+}
+#modal h2{font-family:'Noto Serif TC',serif;color:var(--gold);font-size:18px;margin-bottom:16px;text-align:center}
+#modal p{color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:16px}
+.modal-input{
+  width:100%;padding:10px 12px;background:var(--dark);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text);font-size:16px;font-family:'Noto Sans TC',sans-serif;
+  margin-bottom:12px
+}
+.modal-input:focus{outline:none;border-color:var(--gold)}
+.choice-btn{
+  width:100%;padding:12px;border:1px solid var(--border);background:var(--dark3);
+  border-radius:var(--r);color:var(--text);font-size:13px;cursor:pointer;
+  margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;
+  transition:all .2s;text-align:left;line-height:1.5
+}
+.choice-btn:hover,.choice-btn:active{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.4);color:var(--gold)}
+.choice-btn.selected{background:rgba(201,168,76,.2);border-color:var(--gold);color:var(--gold)}
+
+/* ── EVENTS ── */
+.event-card{
+  background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);
+  border-radius:var(--r);padding:10px;margin-bottom:8px
+}
+.event-title{color:var(--gold);font-size:12px;font-weight:700;margin-bottom:4px}
+.event-desc{color:var(--muted);font-size:11px;line-height:1.5}
+
+/* ── SKILL CARD ── */
+.skill-card{
+  background:var(--dark3);border:1px solid var(--border);
+  border-radius:var(--r);padding:8px 10px;margin-bottom:6px
+}
+.skill-name{color:var(--text);font-size:12px;font-weight:500}
+.skill-lv{color:var(--gold);font-size:11px}
+.skill-bar-wrap{margin-top:4px;background:#1a1a30;height:4px;border-radius:2px;overflow:hidden}
+.skill-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+
+/* ── SCROLL ── */
+#side-content .scroll-hint{text-align:center;color:var(--muted);font-size:10px;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="title-text">轉生異世界統治者</div>
+    <div id="rank-badge">第一章：轉生之始</div>
+  </div>
+
+  <!-- STAT BAR -->
+  <div id="statbar">
+    <div class="stat-item">
+      <span class="stat-label">HP</span>
+      <div class="bar-outer"><div class="bar-inner" id="b-hp" style="background:var(--hp);width:100%"></div></div>
+      <span id="t-hp" style="font-size:10px">20/20</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">MP</span>
+      <div class="bar-outer"><div class="bar-inner" id="b-mp" style="background:var(--mp);width:100%"></div></div>
+      <span id="t-mp" style="font-size:10px">10/10</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">EXP</span>
+      <div class="bar-outer"><div class="bar-inner" id="b-exp" style="background:var(--exp);width:0%"></div></div>
+      <span id="t-exp" style="font-size:10px">0/100</span>
+    </div>
+    <div class="stat-item" style="margin-left:auto">
+      <span class="stat-label">💰</span>
+      <span id="t-gold" style="color:var(--gold);font-size:12px">0</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">📅</span>
+      <span id="t-day" style="font-size:12px">第1天</span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- MAP PANEL -->
+    <div id="map-panel">
+      <div id="map-wrap">
+        <canvas id="c"></canvas>
+        <div id="location-label">青草村 · 廣場</div>
+      </div>
+
+      <!-- MSG LOG -->
+      <div id="msglog"></div>
+
+      <!-- DPAD -->
+      <div id="dpad-area">
+        <div id="dpad">
+          <div></div>
+          <button ontouchstart="mv(0,-1);return false" onclick="mv(0,-1)">▲</button>
+          <div></div>
+          <button ontouchstart="mv(-1,0);return false" onclick="mv(-1,0)">◀</button>
+          <button onclick="interact()">●</button>
+          <button ontouchstart="mv(1,0);return false" onclick="mv(1,0)">▶</button>
+          <div></div>
+          <button ontouchstart="mv(0,1);return false" onclick="mv(0,1)">▼</button>
+          <div></div>
+        </div>
+        <div id="action-btns">
+          <button class="act-btn" onclick="showTab('village')">🏘️ 村政</button>
+          <button class="act-btn" onclick="showTab('skills')">⚔️ 能力</button>
+          <button class="act-btn" onclick="endDay()">🌙 過一天</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDE PANEL -->
+    <div id="side">
+      <div id="side-tabs">
+        <div class="tab active" onclick="showTab('status')" id="tab-status">狀態</div>
+        <div class="tab" onclick="showTab('village')" id="tab-village">村政</div>
+        <div class="tab" onclick="showTab('skills')" id="tab-skills">能力</div>
+      </div>
+      <div id="side-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" style="display:none">
+  <div id="modal"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════
+const G = {
+  name: '',
+  hp:20, mhp:20, mp:10, mmp:10,
+  exp:0, expNext:100, level:1,
+  gold:0, day:1,
+  rank:'流浪者', rankLv:0,
+  // 村政
+  village:{
+    name:'青草村', population:48, morale:60, food:80,
+    treasury:0, trust:0, buildings:[]
+  },
+  // 技能
+  skills:{
+    body:{name:'體力',lv:0,exp:0,next:50},
+    speech:{name:'口才',lv:0,exp:0,next:50},
+    manage:{name:'管理',lv:0,exp:0,next:50},
+    fight:{name:'戰鬥',lv:0,exp:0,next:50},
+    farm:{name:'農業',lv:0,exp:0,next:50},
+  },
+  // 位置
+  px:8, py:7,
+  // flags
+  talked:{elder:false,farmer:false,guard:false,merchant:false},
+  events:[],
+  pendingEvents:[],
+  inModal:false,
+};
+
+// ═══════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════
+const TW=16;
+const COLS=16, ROWS=12;
+// Tiles: 0=grass,1=wall,2=path,3=tree,4=water,5=house,6=well,7=elder,8=farm,9=guard,10=shop,11=sign
+const MAP=[
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,3,3,8,8,8,8,3,1,3,3,3,3,3,3,1],
+  [1,3,0,0,0,0,0,3,1,3,0,0,0,3,3,1],
+  [1,8,0,5,0,0,5,0,2,0,5,0,5,0,3,1],
+  [1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1],
+  [1,9,0,0,2,2,2,2,2,2,2,0,0,10,0,1],
+  [1,0,0,0,2,6,0,0,0,7,2,0,0,0,0,1],
+  [1,0,0,0,2,0,0,0,0,0,2,0,0,0,0,1],
+  [1,3,0,5,2,0,0,0,0,0,2,5,0,0,3,1],
+  [1,3,0,0,2,2,2,2,2,2,2,0,0,0,3,1],
+  [1,4,4,4,0,0,0,0,0,0,0,3,3,4,4,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+];
+// POI labels
+const POI={
+  '5,6':{name:'長老小屋',key:'elder'},
+  '9,6':{name:'長老家',key:'elder'},
+  '3,5':{name:'守衛',key:'guard'},
+  '13,5':{name:'商店',key:'merchant'},
+  '5,5':{name:'水井',key:'well'},
+  '3,1':{name:'農田',key:'farmer'},
+};
+
+const COLORS={
+  0:'#3d6b3d',1:'#3a2a1a',2:'#8a7a5a',3:'#2a5a20',
+  4:'#1a4a8a',5:'#7a5a3a',6:'#6a6a8a',7:'#8a6a4a',
+  8:'#5a7a30',9:'#5a3a5a',10:'#7a4a2a',11:'#6a5a3a'
+};
+
+// ── CANVAS ──
+const cv=document.getElementById('c');
+const ctx=cv.getContext('2d');
+let camX=0,camY=0;
+
+function resizeCanvas(){
+  const wrap=document.getElementById('map-wrap');
+  cv.width=wrap.clientWidth;
+  cv.height=wrap.clientHeight;
+  updateCam();draw();
+}
+
+function updateCam(){
+  const vw=Math.floor(cv.width/TW),vh=Math.floor(cv.height/TW);
+  camX=Math.max(0,Math.min(COLS-vw,G.px-Math.floor(vw/2)));
+  camY=Math.max(0,Math.min(ROWS-vh,G.py-Math.floor(vh/2)));
+}
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const vw=Math.ceil(cv.width/TW)+1,vh=Math.ceil(cv.height/TW)+1;
+  for(let y=camY;y<Math.min(camY+vh,ROWS);y++){
+    for(let x=camX;x<Math.min(camX+vw,COLS);x++){
+      const t=MAP[y][x];
+      const sx=(x-camX)*TW,sy=(y-camY)*TW;
+      ctx.fillStyle=COLORS[t]||'#333';
+      ctx.fillRect(sx,sy,TW,TW);
+      // decoration
+      if(t===3){ctx.fillStyle='#1a4010';ctx.fillRect(sx+3,sy+1,10,8);ctx.fillStyle='#5a3010';ctx.fillRect(sx+5,sy+9,6,7);}
+      if(t===5){ctx.fillStyle='#6a4a2a';ctx.fillRect(sx+1,sy+4,14,12);ctx.fillStyle='#8a3a2a';ctx.fillRect(sx,sy+2,16,5);}
+      if(t===6){ctx.fillStyle='#888';ctx.fillRect(sx+4,sy+4,8,8);ctx.fillStyle='#555';ctx.fillRect(sx+6,sy+6,4,6);}
+      if(t===7){ctx.fillStyle='#6a4a2a';ctx.fillRect(sx+1,sy+4,14,12);ctx.fillStyle='#5a8a3a';ctx.fillRect(sx,sy+2,16,5);}
+      if(t===8){ctx.fillStyle='#7a9a40';ctx.fillRect(sx+1,sy+2,14,12);
+        for(let i=0;i<4;i++){ctx.fillStyle='#4a6a20';ctx.fillRect(sx+2+i*3,sy+4,2,8);}
+      }
+      if(t===9){ctx.fillStyle='#4a3a6a';ctx.fillRect(sx+3,sy+3,10,12);ctx.fillStyle='#aaa';ctx.fillRect(sx+6,sy+5,4,5);}
+      if(t===10){ctx.fillStyle='#7a4a1a';ctx.fillRect(sx+1,sy+3,14,13);ctx.fillStyle='#c8a040';ctx.fillRect(sx+4,sy+6,8,4);}
+    }
+  }
+  // Player
+  const px=(G.px-camX)*TW,py=(G.py-camY)*TW;
+  ctx.fillStyle='#f0c060';ctx.fillRect(px+3,py+4,10,9);
+  ctx.fillStyle='#c8a060';ctx.fillRect(px+4,py+2,8,5);
+  ctx.fillStyle='#3a6aaa';ctx.fillRect(px+3,py+8,4,8);ctx.fillRect(px+9,py+8,4,8);
+  // name tag
+  if(G.name){
+    ctx.fillStyle='rgba(0,0,0,0.5)';
+    const nw=ctx.measureText(G.name).width+8;
+    ctx.fillRect(px+8-nw/2,py-12,nw,12);
+    ctx.fillStyle='#f0d080';ctx.font='bold 9px monospace';
+    ctx.fillText(G.name,px+8-nw/2+4,py-3);
+  }
+}
+
+// ═══════════════════════════════════════
+//  MOVEMENT
+// ═══════════════════════════════════════
+function mv(dx,dy){
+  if(G.inModal)return;
+  const nx=G.px+dx,ny=G.py+dy;
+  if(nx<0||nx>=COLS||ny<0||ny>=ROWS)return;
+  const t=MAP[ny][nx];
+  if(t===1||t===3||t===4)return;
+  G.px=nx;G.py=ny;
+  updateCam();draw();
+  updateLocationLabel();
+  // step training
+  gainSkillExp('body',1);
+}
+
+function updateLocationLabel(){
+  const k=G.px+','+G.py;
+  const poi=POI[k];
+  document.getElementById('location-label').textContent=
+    '青草村 · '+(poi?poi.name:'村內');
+}
+
+function interact(){
+  if(G.inModal)return;
+  const k=G.px+','+G.py;
+  const poi=POI[k];
+  if(!poi){msg('這附近沒有可互動的對象。');return;}
+  switch(poi.key){
+    case'elder':talkElder();break;
+    case'guard':talkGuard();break;
+    case'merchant':talkMerchant();break;
+    case'farmer':talkFarmer();break;
+    case'well':useWell();break;
+  }
+}
+
+// ═══════════════════════════════════════
+//  MESSAGES
+// ═══════════════════════════════════════
+function msg(text,cls=''){
+  const log=document.getElementById('msglog');
+  const d=document.createElement('div');
+  d.className='msg-line '+(cls||'');
+  d.textContent=text;
+  log.appendChild(d);
+  log.scrollTop=log.scrollHeight;
+  while(log.children.length>40)log.removeChild(log.firstChild);
+}
+
+// ═══════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════
+function showModal(html){
+  G.inModal=true;
+  document.getElementById('modal').innerHTML=html;
+  document.getElementById('modal-overlay').style.display='flex';
+}
+function closeModal(){
+  G.inModal=false;
+  document.getElementById('modal-overlay').style.display='none';
+}
+
+// ═══════════════════════════════════════
+//  INTRO
+// ═══════════════════════════════════════
+function showIntro(){
+  showModal(`
+    <h2>⚡ 轉生異世界 ⚡</h2>
+    <p style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:4px">第一章：轉生之始</p>
+    <p>你原本是個普通的大學生。<br>某個平凡的夜晚，你閉上眼睛⋯⋯</p>
+    <p>再睜開，眼前是陌生的藍天，身旁是一片田野。<br>一名老農夫盯著你看：「這位年輕人，你是哪裡來的？」</p>
+    <p>你意識到——你來到了一個完全陌生的世界。<br>沒有技能、沒有金錢、沒有地圖。<br>只有一股說不清的直覺：<span style="color:var(--gold)">這個世界需要你來改變。</span></p>
+    <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
+    <p style="color:var(--gold2)">請輸入你的名字：</p>
+    <input class="modal-input" id="name-input" placeholder="輸入主角名稱" maxlength="8">
+    <button class="choice-btn" onclick="confirmName()">✦ 開始冒險</button>
+  `);
+  setTimeout(()=>document.getElementById('name-input').focus(),100);
+}
+
+function confirmName(){
+  const n=document.getElementById('name-input').value.trim();
+  if(!n){return;}
+  G.name=n;
+  closeModal();
+  msg('=== 轉生異世界統治者 ===','gold');
+  msg('主角「'+G.name+'」踏上了異世界的第一步。','blue');
+  msg('你出現在一個叫「青草村」的小村莊附近。');
+  msg('試著走到各處和村民對話，了解這個世界。');
+  draw();
+  showTab('status');
+  // trigger first event after short delay
+  setTimeout(()=>triggerEvent('arrive'),1000);
+}
+
+// ═══════════════════════════════════════
+//  NPC DIALOGUES
+// ═══════════════════════════════════════
+function talkElder(){
+  gainSkillExp('speech',3);
+  if(!G.talked.elder){
+    G.talked.elder=true;
+    G.village.trust+=5;
+    showModal(`
+      <h2>🧙 村長·阿德爾</h2>
+      <p>一位滿臉皺紋的老人打量著你，眼神卻出乎意料地銳利。</p>
+      <p>「你不是這裡的人。我在這村子住了七十年，從沒見過你這張臉。」</p>
+      <p>「不過⋯⋯你的眼神裡有些東西。說不定你真的能幫上我們。」</p>
+      <p style="color:var(--gold2)">「這個村子已經衰落太久了。人口流失，食物短缺，年輕人都跑去城裡。我老了，撐不了幾年。」</p>
+      <p>「如果你願意，就留下來幫幫這個村子吧。」</p>
+      <button class="choice-btn" onclick="elderChoice(1)">「我願意留下來幫忙。」<br><span style="font-size:11px;color:var(--muted)">獲得：信任度+5，管理技能EXP</span></button>
+      <button class="choice-btn" onclick="elderChoice(2)">「先告訴我這個世界的狀況。」<br><span style="font-size:11px;color:var(--muted)">獲得：世界觀知識，口才EXP</span></button>
+      <button class="choice-btn" onclick="elderChoice(3)">「有報酬嗎？」<br><span style="font-size:11px;color:var(--muted)">中性選項</span></button>
+    `);
+  } else {
+    showModal(`
+      <h2>🧙 村長·阿德爾</h2>
+      <p>「${G.name}，村子的事就靠你了。」</p>
+      <p>村長的信任度：<span style="color:var(--gold)">${G.village.trust}</span></p>
+      <p style="color:var(--muted)">繼續幫助村民來提升信任度，當信任度達到50時，你將成為村莊管理者。</p>
+      <button class="choice-btn" onclick="closeModal()">離開</button>
+    `);
+  }
+}
+
+function elderChoice(c){
+  closeModal();
+  if(c===1){
+    gainSkillExp('manage',8);
+    G.village.trust+=5;
+    msg('你決定留下來幫助青草村。','gold');
+    msg('長老感動地點頭：「好孩子，村子的將來就靠你了。」');
+    msg('[管理技能EXP +8]','green');
+  } else if(c===2){
+    gainSkillExp('speech',5);
+    msg('長老向你解說這個世界的基本狀況。','blue');
+    msg('這是一個名為「艾爾達」的大陸，由數十個城邦組成。');
+    msg('青草村屬於格林王國的邊境。戰爭雖已停歇，但民生凋敝。');
+    msg('[口才技能EXP +5]','green');
+  } else {
+    msg('長老笑了：「老實的孩子。幫助村子成長，自然有你的好處。」');
+  }
+  updateUI();
+}
+
+function talkFarmer(){
+  gainSkillExp('speech',2);
+  gainSkillExp('farm',3);
+  if(!G.talked.farmer){
+    G.talked.farmer=true;
+    showModal(`
+      <h2>🌾 老農·葛林</h2>
+      <p>一名曬得黝黑的老農夫看著你，汗水打濕了額頭。</p>
+      <p>「外鄉人？少見少見。這塊地本來可以種更多糧食的，但沒有足夠的人手。」</p>
+      <p style="color:var(--gold2)">「如果你有力氣，幫我一起翻翻這塊地吧？」</p>
+      <button class="choice-btn" onclick="farmChoice(1)">立刻幫忙耕地<br><span style="font-size:11px;color:var(--muted)">HP -5，農業EXP大幅提升，食物+10</span></button>
+      <button class="choice-btn" onclick="farmChoice(2)">詢問村子糧食狀況<br><span style="font-size:11px;color:var(--muted)">口才EXP，了解農業數據</span></button>
+      <button class="choice-btn" onclick="closeModal()">「我先看看再說。」</button>
+    `);
+  } else {
+    showModal(`
+      <h2>🌾 老農·葛林</h2>
+      <p>「多虧你，農田的狀況好多了。」</p>
+      <p>村莊食物：<span style="color:var(--food)">${G.village.food}%</span></p>
+      <button class="choice-btn" onclick="farmWork()">繼續幫忙耕作（HP-3，農業EXP+5，食物+5）</button>
+      <button class="choice-btn" onclick="closeModal()">離開</button>
+    `);
+  }
+}
+
+function farmChoice(c){
+  closeModal();
+  if(c===1){
+    if(G.hp<=5){msg('你的體力不足以耕地。','red');return;}
+    G.hp-=5;G.village.food=Math.min(100,G.village.food+10);
+    gainSkillExp('farm',15);gainSkillExp('body',5);
+    msg('你捲起袖子，和老葛林一起在烈日下耕地。','gold');
+    msg('這是你第一次親手勞動，肌肉痠痛，但心裡有說不出的充實感。');
+    msg('[農業EXP+15，體力EXP+5，食物+10]','green');
+    updateUI();
+  } else {
+    gainSkillExp('speech',4);
+    msg('葛林嘆氣：「今年收成大概只有往年的六成。人手不夠啊。」','blue');
+    msg('「如果能蓋個倉庫，至少糧食不會白白浪費。」');
+  }
+}
+
+function farmWork(){
+  closeModal();
+  if(G.hp<=3){msg('體力不足。','red');return;}
+  G.hp-=3;G.village.food=Math.min(100,G.village.food+5);
+  gainSkillExp('farm',5);
+  msg('[農業EXP+5，食物+5]','green');
+  updateUI();
+}
+
+function talkGuard(){
+  gainSkillExp('speech',2);
+  gainSkillExp('fight',2);
+  if(!G.talked.guard){
+    G.talked.guard=true;
+    showModal(`
+      <h2>⚔️ 守衛·馬庫斯</h2>
+      <p>一名穿著破舊皮甲的年輕士兵站在村口，懶洋洋地靠著長矛。</p>
+      <p>「新來的？這地方沒什麼好看的。」</p>
+      <p style="color:var(--gold2)">「不過⋯⋯你要是想學點防身術，我可以教你。這地方雖然偏僻，但野外還是有些危險的東西。」</p>
+      <button class="choice-btn" onclick="guardChoice(1)">「教我吧！」（體力訓練）<br><span style="font-size:11px;color:var(--muted)">HP-3，戰鬥EXP大幅提升</span></button>
+      <button class="choice-btn" onclick="guardChoice(2)">「村子的治安如何？」<br><span style="font-size:11px;color:var(--muted)">了解村莊安全狀況</span></button>
+      <button class="choice-btn" onclick="closeModal()">「先算了。」</button>
+    `);
+  } else {
+    showModal(`
+      <h2>⚔️ 守衛·馬庫斯</h2>
+      <p>「${G.name}，今天還要繼續練嗎？」</p>
+      <button class="choice-btn" onclick="guardTrain()">繼續訓練（HP-3，戰鬥EXP+8）</button>
+      <button class="choice-btn" onclick="closeModal()">離開</button>
+    `);
+  }
+}
+
+function guardChoice(c){
+  closeModal();
+  if(c===1){
+    if(G.hp<=3){msg('體力不足。','red');return;}
+    G.hp-=3;gainSkillExp('fight',12);gainSkillExp('body',4);
+    msg('馬庫斯教你基本的劍法和格擋姿勢。','gold');
+    msg('雖然動作笨拙，但你感覺身體在慢慢適應。');
+    msg('[戰鬥EXP+12，體力EXP+4]','green');
+    updateUI();
+  } else {
+    msg('馬庫斯嘆氣：「最近野外的狼群好像又靠近了。就我一個人守著，真的很吃力。」','blue');
+    msg('「村子要是有更多守衛就好了。」');
+  }
+}
+
+function guardTrain(){
+  closeModal();
+  if(G.hp<=3){msg('體力不足。','red');return;}
+  G.hp-=3;gainSkillExp('fight',8);
+  msg('[戰鬥EXP+8]','green');
+  updateUI();
+}
+
+function talkMerchant(){
+  gainSkillExp('speech',3);
+  showModal(`
+    <h2>🛒 旅行商人·薩里</h2>
+    <p>一名風塵僕僕的商人坐在堆滿雜貨的攤位後，看到你露出職業性微笑。</p>
+    <p>「你好啊，外鄉人！需要點什麼嗎？」</p>
+    <div style="margin:12px 0">
+      <div class="info-row"><span>🍞 乾糧 ×1</span><span class="info-val">5金幣</span></div>
+      <div class="info-row"><span>🧪 體力藥水</span><span class="info-val">20金幣</span></div>
+      <div class="info-row"><span>📜 世界地圖</span><span class="info-val">50金幣</span></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted)">你目前有 <span style="color:var(--gold)">${G.gold}</span> 金幣</p>
+    <button class="choice-btn" onclick="buyItem('bread')">購買乾糧（HP+8）- 5金幣</button>
+    <button class="choice-btn" onclick="buyItem('potion')">購買體力藥水（HP全回）- 20金幣</button>
+    <button class="choice-btn" onclick="merchantChat()">詢問外面的世界</button>
+    <button class="choice-btn" onclick="closeModal()">離開</button>
+  `);
+}
+
+function buyItem(item){
+  if(item==='bread'){
+    if(G.gold<5){msg('金幣不足。','red');closeModal();return;}
+    G.gold-=5;G.hp=Math.min(G.mhp,G.hp+8);
+    msg('購買了乾糧，HP+8。','green');
+  } else if(item==='potion'){
+    if(G.gold<20){msg('金幣不足。','red');closeModal();return;}
+    G.gold-=20;G.hp=G.mhp;
+    msg('喝下體力藥水，HP全部恢復！','green');
+  }
+  updateUI();closeModal();
+}
+
+function merchantChat(){
+  closeModal();
+  gainSkillExp('speech',4);
+  msg('商人悠悠地說：「這個大陸啊，分成好幾個王國。」','blue');
+  msg('「格林王國是個中等大小的國家，算不上強，也不算弱。」');
+  msg('「聽說首都最近在招募有能力的年輕人擔任官員。」');
+  msg('[口才EXP+4]','green');
+  updateUI();
+}
+
+function useWell(){
+  G.hp=Math.min(G.mhp,G.hp+5);G.mp=Math.min(G.mmp,G.mp+3);
+  msg('你在水井邊休息，喝了些清涼的水。HP+5，MP+3。','green');
+  updateUI();
+}
+
+// ═══════════════════════════════════════
+//  SKILLS
+// ═══════════════════════════════════════
+function gainSkillExp(key,amt){
+  const sk=G.skills[key];
+  sk.exp+=amt;
+  while(sk.exp>=sk.next){
+    sk.exp-=sk.next;
+    sk.lv++;
+    sk.next=Math.floor(sk.next*1.5);
+    msg('【'+sk.name+'】技能提升到Lv.'+sk.lv+'！','gold');
+    G.exp+=20;checkLevelUp();
+    applySkillBonus(key,sk.lv);
+  }
+  // also gain character EXP
+  G.exp+=Math.floor(amt/5);
+  checkLevelUp();
+}
+
+function applySkillBonus(key,lv){
+  if(key==='body'){G.mhp+=5;G.hp+=5;msg('最大HP提升！','green');}
+  if(key==='manage'&&lv>=2){G.village.trust+=3;}
+  if(key==='farm'&&lv>=1){G.village.food=Math.min(100,G.village.food+5);}
+}
+
+function checkLevelUp(){
+  while(G.exp>=G.expNext){
+    G.exp-=G.expNext;G.level++;
+    G.expNext=Math.floor(G.expNext*1.4);
+    G.mhp+=5;G.hp=G.mhp;G.mmp+=3;G.mp=G.mmp;
+    msg('★ LEVEL UP！ Lv.'+G.level+' ─ HP・MP全回復！','gold');
+    checkRankUp();
+  }
+  updateUI();
+}
+
+const RANKS=['流浪者','村民','有為青年','村莊顧問','副村長','村長','鄉長','市議員','副市長','市長','縣長','省長','國會議員','部長','副總統','總統','世界領袖'];
+
+function checkRankUp(){
+  const trust=G.village.trust;
+  const lv=G.level;
+  let newRank=0;
+  if(lv>=2&&trust>=10)newRank=1;
+  if(lv>=3&&trust>=20)newRank=2;
+  if(lv>=5&&trust>=35)newRank=3;
+  if(lv>=7&&trust>=50)newRank=4;
+  if(lv>=10&&trust>=70)newRank=5;
+  if(newRank>G.rankLv){
+    G.rankLv=newRank;G.rank=RANKS[newRank];
+    msg('◆◆◆ 地位提升：「'+G.rank+'」！◆◆◆','gold');
+    showRankUpModal();
+  }
+}
+
+function showRankUpModal(){
+  showModal(`
+    <h2>🏆 地位提升！</h2>
+    <p style="text-align:center;font-size:24px;margin:16px 0">${G.rank}</p>
+    <p style="text-align:center;color:var(--muted)">你在青草村的地位越來越重要了。</p>
+    <p>繼續提升信任度和技能，朝著更高的目標邁進！</p>
+    <button class="choice-btn" onclick="closeModal()">繼續冒險</button>
+  `);
+}
+
+// ═══════════════════════════════════════
+//  VILLAGE MANAGEMENT
+// ═══════════════════════════════════════
+function endDay(){
+  if(G.inModal)return;
+  G.day++;
+  // daily changes
+  G.village.food=Math.max(0,G.village.food-Math.floor(G.village.population/10));
+  G.mp=Math.min(G.mmp,G.mp+3);
+  G.hp=Math.min(G.mhp,G.hp+5);
+  // gold from treasury if trusted
+  if(G.village.trust>=20){const earn=Math.floor(G.village.trust/10);G.gold+=earn;}
+  // random events
+  maybeTriggerRandomEvent();
+  msg('──── 第'+G.day+'天開始 ────','gold');
+  msg('精神略有恢復。MP+3，HP+5。');
+  if(G.village.food<20)msg('⚠️ 警告：村莊糧食嚴重不足！','red');
+  if(G.village.morale<30)msg('⚠️ 警告：村莊士氣低落！','red');
+  document.getElementById('t-day').textContent='第'+G.day+'天';
+  checkRankUp();updateUI();
+  if(activeTab==='village')renderVillageTab();
+}
+
+function maybeTriggerRandomEvent(){
+  if(Math.random()<0.3){
+    const events=[
+      {title:'小偷出沒',desc:'有人在村子裡偷東西，居民人心惶惶。',effect:()=>{G.village.morale-=5;},choices:[
+        {text:'親自調查（管理EXP+10）',fn:()=>{gainSkillExp('manage',10);G.village.trust+=5;G.village.morale+=8;msg('你成功找出小偷，村民大為感激。','gold');}},
+        {text:'告訴守衛（快速解決）',fn:()=>{G.village.morale+=3;msg('守衛處理了事件，但你的存在感不強。');}},
+      ]},
+      {title:'旅人求助',desc:'一名受傷的旅人倒在村口，需要食物和休息。',effect:()=>{},choices:[
+        {text:'提供幫助（食物-5，好感+）',fn:()=>{G.village.food-=5;G.village.trust+=3;gainSkillExp('speech',5);msg('旅人感謝你的善心，並分享了一些外界的情報。','green');}},
+        {text:'婉拒（糧食不夠用）',fn:()=>{msg('你無奈地搖搖頭，糧食實在不夠分。');}},
+      ]},
+      {title:'豐收小喜訊',desc:'農田比預期多長了些作物！',effect:()=>{G.village.food+=10;},choices:[
+        {text:'太好了！',fn:()=>{msg('村民們臉上都出現了久違的笑容。','green');G.village.morale+=5;}},
+      ]},
+    ];
+    const ev=events[Math.floor(Math.random()*events.length)];
+    ev.effect();
+    showEventModal(ev);
+  }
+}
+
+function showEventModal(ev){
+  let btnHtml=ev.choices.map((c,i)=>`<button class="choice-btn" onclick="eventChoice(${i})">${c.text}</button>`).join('');
+  window._eventChoices=ev.choices;
+  showModal(`
+    <h2>📢 突發事件</h2>
+    <div class="event-card">
+      <div class="event-title">${ev.title}</div>
+      <div class="event-desc">${ev.desc}</div>
+    </div>
+    ${btnHtml}
+  `);
+}
+
+function eventChoice(i){
+  window._eventChoices[i].fn();
+  updateUI();closeModal();
+}
+
+function triggerEvent(key){
+  if(key==='arrive'){
+    showModal(`
+      <h2>🌄 轉生的第一天</h2>
+      <p>陽光暖洋洋地照在你臉上，耳邊傳來雞鳴聲和遠處的農具聲。</p>
+      <p>一位老爺爺走了過來，帶著好奇的眼神：</p>
+      <p style="color:var(--gold2)">「孩子，你從哪裡來的？看你的打扮，不像是我們這裡的人啊。」</p>
+      <p>你環顧四周——這個世界和你原本的地方截然不同，但你感覺到一種奇特的可能性在胸口燃燒。</p>
+      <p style="color:var(--muted);font-size:12px">提示：走動探索，按中央●鍵和NPC對話。每天結束按「過一天」按鈕推進時間。</p>
+      <button class="choice-btn" onclick="closeModal()">開始探索青草村</button>
+    `);
+  }
+}
+
+// ═══════════════════════════════════════
+//  BUILD VILLAGE
+// ═══════════════════════════════════════
+const BUILDINGS=[
+  {id:'barn',name:'糧倉',cost:30,desc:'增加糧食儲存上限，減少每日消耗',effect:()=>{G.village.food=Math.min(150,G.village.food+20);},req:()=>G.village.trust>=15},
+  {id:'school',name:'小學堂',cost:50,desc:'提升村民素質，每天自動獲得EXP',effect:()=>{},req:()=>G.village.trust>=25},
+  {id:'wall',name:'木製柵欄',cost:40,desc:'提升村莊安全，減少突發事件負面影響',effect:()=>{G.village.morale+=10;},req:()=>G.village.trust>=20},
+  {id:'market',name:'小市集',cost:60,desc:'每天自動獲得金幣',effect:()=>{},req:()=>G.village.trust>=30},
+];
+
+// ═══════════════════════════════════════
+//  UI TABS
+// ═══════════════════════════════════════
+let activeTab='status';
+
+function showTab(tab){
+  activeTab=tab;
+  ['status','village','skills'].forEach(t=>{
+    document.getElementById('tab-'+t).className='tab'+(t===tab?' active':'');
+  });
+  const c=document.getElementById('side-content');
+  if(tab==='status')renderStatusTab(c);
+  else if(tab==='village')renderVillageTab(c);
+  else if(tab==='skills')renderSkillsTab(c);
+}
+
+function renderStatusTab(c){
+  c=c||document.getElementById('side-content');
+  c.innerHTML=`
+    <div class="panel-section">
+      <div class="panel-title">基本資訊</div>
+      <div class="info-row"><span>名字</span><span class="info-val">${G.name||'未命名'}</span></div>
+      <div class="info-row"><span>等級</span><span class="info-val">Lv.${G.level}</span></div>
+      <div class="info-row"><span>地位</span><span class="info-val" style="color:var(--gold)">${G.rank}</span></div>
+      <div class="info-row"><span>金幣</span><span class="info-val">${G.gold}g</span></div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">村莊概覽</div>
+      <div class="info-row"><span>信任度</span><span class="info-val">${G.village.trust}/100</span></div>
+      <div class="info-row"><span>人口</span><span class="info-val">${G.village.population}人</span></div>
+      <div class="info-row"><span>糧食</span><span class="info-val">${G.village.food}%</span></div>
+      <div class="info-row"><span>士氣</span><span class="info-val">${G.village.morale}%</span></div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">下一階段</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.8">
+        ${G.rankLv<5?`
+        信任度需達到：<span style="color:var(--gold)">${[0,10,20,35,50,70][Math.min(G.rankLv+1,5)]}</span><br>
+        等級需達到：<span style="color:var(--gold)">${[1,2,3,5,7,10][Math.min(G.rankLv+1,5)]}</span><br>
+        目標：<span style="color:var(--gold2)">${RANKS[G.rankLv+1]||'頂點'}</span>
+        `:'你已達到目前階段的頂點！'}
+      </div>
+    </div>
+    <button class="btn" onclick="restAction()">💤 原地休息（HP+10，MP+5）</button>
+  `;
+}
+
+function renderVillageTab(c){
+  c=c||document.getElementById('side-content');
+  const v=G.village;
+  const built=G.village.buildings||[];
+  let buildHtml=BUILDINGS.filter(b=>!built.includes(b.id)).map(b=>{
+    const ok=b.req()&&G.gold>=b.cost;
+    return `<button class="btn${ok?'':' disabled'}" onclick="${ok?`buildIt('${b.id}')`:''}">
+      🏗️ ${b.name}（${b.cost}g）<br><span style="font-size:10px;color:var(--muted)">${b.desc}</span>
+    </button>`;
+  }).join('');
+  if(!buildHtml)buildHtml='<div style="color:var(--muted);font-size:11px">暫無可建設項目</div>';
+
+  c.innerHTML=`
+    <div class="panel-section">
+      <div class="panel-title">村莊狀態</div>
+      <div class="info-row"><span>人口</span><span class="info-val">${v.population}人</span></div>
+      <div class="info-row"><span>士氣</span>
+        <div class="bar-outer" style="width:70px"><div class="bar-inner" style="background:var(--morale);width:${v.morale}%"></div></div>
+        <span class="info-val">${v.morale}%</span>
+      </div>
+      <div class="info-row"><span>糧食</span>
+        <div class="bar-outer" style="width:70px"><div class="bar-inner" style="background:var(--food);width:${Math.min(100,v.food)}%"></div></div>
+        <span class="info-val">${v.food}%</span>
+      </div>
+      <div class="info-row"><span>信任</span>
+        <div class="bar-outer" style="width:70px"><div class="bar-inner" style="background:var(--exp);width:${v.trust}%"></div></div>
+        <span class="info-val">${v.trust}/100</span>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">建設（金幣：${G.gold}g）</div>
+      ${buildHtml}
+    </div>
+    ${built.length?`<div class="panel-section"><div class="panel-title">已建設</div>${built.map(b=>`<div style="font-size:11px;color:var(--green);padding:3px 0">✓ ${BUILDINGS.find(x=>x.id===b)?.name||b}</div>`).join('')}</div>`:''}
+    <div class="panel-section">
+      <div class="panel-title">政策</div>
+      <button class="btn" onclick="doPolicy('speech')">發表演講（MP-3，士氣+5，口才EXP）</button>
+      <button class="btn" onclick="doPolicy('recruit')">招募人手（金幣-10，人口+2）</button>
+    </div>
+  `;
+}
+
+function renderSkillsTab(c){
+  c=c||document.getElementById('side-content');
+  let html='<div class="panel-section"><div class="panel-title">技能</div>';
+  Object.values(G.skills).forEach(sk=>{
+    const pct=Math.floor(sk.exp/sk.next*100);
+    html+=`<div class="skill-card">
+      <div style="display:flex;justify-content:space-between">
+        <span class="skill-name">${sk.name}</span>
+        <span class="skill-lv">Lv.${sk.lv}</span>
+      </div>
+      <div class="skill-bar-wrap"><div class="skill-bar-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px">${sk.exp}/${sk.next} EXP</div>
+    </div>`;
+  });
+  html+='</div>';
+  html+=`<div class="panel-section">
+    <div class="panel-title">訓練</div>
+    <button class="btn" onclick="train('body')">💪 體能訓練（HP-5，體力EXP+10）</button>
+    <button class="btn" onclick="train('speech')">🗣️ 自我演練（MP-3，口才EXP+8）</button>
+    <button class="btn" onclick="train('manage')">📋 研讀村政（MP-4，管理EXP+10）</button>
+  </div>`;
+  c.innerHTML=html;
+}
+
+function buildIt(id){
+  const b=BUILDINGS.find(x=>x.id===id);
+  if(!b||G.gold<b.cost)return;
+  G.gold-=b.cost;
+  G.village.buildings=G.village.buildings||[];
+  G.village.buildings.push(id);
+  b.effect();
+  msg('【'+b.name+'】建設完成！','gold');
+  gainSkillExp('manage',10);
+  updateUI();renderVillageTab();
+}
+
+function doPolicy(type){
+  if(type==='speech'){
+    if(G.mp<3){msg('MP不足。','red');return;}
+    G.mp-=3;G.village.morale=Math.min(100,G.village.morale+5);
+    gainSkillExp('speech',6);G.village.trust+=2;
+    msg('你在村民集會上發表演講，士氣提升！','gold');
+  } else if(type==='recruit'){
+    if(G.gold<10){msg('金幣不足。','red');return;}
+    G.gold-=10;G.village.population+=2;
+    msg('招募了2名新村民加入！','green');
+  }
+  updateUI();renderVillageTab();
+}
+
+function train(key){
+  const cost={body:[5,0],speech:[0,3],manage:[0,4]};
+  const [hc,mc]=cost[key]||[0,0];
+  if(G.hp<=hc){msg('HP不足。','red');return;}
+  if(G.mp<mc){msg('MP不足。','red');return;}
+  G.hp-=hc;G.mp-=mc;
+  gainSkillExp(key,{body:10,speech:8,manage:10}[key]||5);
+  msg('訓練完成！','green');
+  updateUI();renderSkillsTab();
+}
+
+function restAction(){
+  G.hp=Math.min(G.mhp,G.hp+10);G.mp=Math.min(G.mmp,G.mp+5);
+  msg('休息了一會兒。HP+10，MP+5。','green');
+  updateUI();
+}
+
+// ═══════════════════════════════════════
+//  UI UPDATE
+// ═══════════════════════════════════════
+function updateUI(){
+  document.getElementById('b-hp').style.width=(G.hp/G.mhp*100)+'%';
+  document.getElementById('b-mp').style.width=(G.mp/G.mmp*100)+'%';
+  document.getElementById('b-exp').style.width=(G.exp/G.expNext*100)+'%';
+  document.getElementById('t-hp').textContent=G.hp+'/'+G.mhp;
+  document.getElementById('t-mp').textContent=G.mp+'/'+G.mmp;
+  document.getElementById('t-exp').textContent=G.exp+'/'+G.expNext;
+  document.getElementById('t-gold').textContent=G.gold+'g';
+  document.getElementById('t-day').textContent='第'+G.day+'天';
+  document.getElementById('rank-badge').textContent=G.rank+' · Lv.'+G.level;
+  if(activeTab==='status')renderStatusTab();
+}
+
+// ═══════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  const map={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+  if(map[e.key]){e.preventDefault();mv(...map[e.key]);}
+  if(e.key==='Enter'||e.key===' ')interact();
+});
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+draw();
+showIntro();
+</script>
+</body>
+</html>
